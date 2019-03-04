@@ -2,6 +2,7 @@ package com.sunxiulei.imageloader;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.util.LruCache;
 import android.widget.ImageView;
 
@@ -19,16 +20,18 @@ import java.util.concurrent.Executors;
  */
 
 public class ImageLoader {
+    private static final String TAG = "ImageLoader";
     //图片缓存
-    LruCache<String, Bitmap> mImageCache;
+    //LruCache<String, Bitmap> mImageCache;
+    ImageCache imageCache = new ImageCache();
     //线程池线程数量为cpu数量
     ExecutorService mExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public ImageLoader() {
-        initImageCache();
+        //initImageCache();
     }
 
-    //缓存相关内容
+   /* //缓存相关内容
     private void initImageCache() {
 
         //计算最大可用内存
@@ -44,23 +47,24 @@ public class ImageLoader {
             }
         };
 
-    }
+    }*/
 
     //显示图片
     public void displayImage(final String url, final ImageView imageView) {
-
+        Log.i(TAG, "run0:");
         imageView.setTag(url);
         mExecutorService.submit(new Runnable() {
             @Override
             public void run() {
                 Bitmap bitmap = downLoadImage(url);
+                Log.i(TAG, "run1: "+bitmap.getRowBytes());
                 if (bitmap == null) {
                     return;
                 }
                 if (imageView.getTag().equals(url)) {
                     imageView.setImageBitmap(bitmap);
                 }
-                mImageCache.put(url, bitmap);
+                imageCache.put(url, bitmap);
             }
         });
     }
@@ -68,15 +72,21 @@ public class ImageLoader {
     //下载图片
     private Bitmap downLoadImage(String url) {
         Bitmap bitmap = null;
-
+        Log.i(TAG, "run2: ");
         try {
             URL mUrl = new URL(url);
             final HttpURLConnection conne = (HttpURLConnection) mUrl.openConnection();
             bitmap = BitmapFactory.decodeStream(conne.getInputStream());
+            if(bitmap==null){
+                Log.i(TAG, "run3: ");
+            }
+            Log.i(TAG, "run4: ");
             conne.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
+
         }
+        Log.i(TAG, "run4: ");
         return bitmap;
     }
 }
