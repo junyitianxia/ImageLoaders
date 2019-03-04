@@ -1,4 +1,4 @@
-package com.sunxiulei.imageloader;
+package com.sunxiulei.imageloader.cache;
 
 import android.graphics.Bitmap;
 import android.util.LruCache;
@@ -6,10 +6,13 @@ import android.util.LruCache;
 /**
  * 作者：sunxiulei on 2019/3/4 10:38
  * 邮箱：649238059@qq.com
+ * 缓存接口缓存相关的直接与他交互
  */
 
-public class ImageCache {
-    LruCache<String, Bitmap> mImageCache;
+public interface ImageCache {
+    public Bitmap get(String url);
+    public void put(String url ,Bitmap bitmap);
+   /* LruCache<String, Bitmap> mImageCache;
     public ImageCache(){
         initImageCache();
     }
@@ -29,7 +32,12 @@ public class ImageCache {
         };
 
     }
+    //存储图片到缓存中
     public void put (String url,Bitmap bitmap){
         mImageCache.put(url,bitmap);
     }
+    //村缓存中获取图片
+    public Bitmap get(String url){
+       return mImageCache.get(url);
+    }*/
 }

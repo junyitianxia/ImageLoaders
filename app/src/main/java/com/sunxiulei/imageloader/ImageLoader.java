@@ -3,12 +3,14 @@ package com.sunxiulei.imageloader;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.util.LruCache;
 import android.widget.ImageView;
+
+import com.sunxiulei.imageloader.cache.DiskCache;
+import com.sunxiulei.imageloader.cache.ImageCache;
+import com.sunxiulei.imageloader.cache.MemoryCache;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,16 +23,21 @@ import java.util.concurrent.Executors;
 
 public class ImageLoader {
     private static final String TAG = "ImageLoader";
-    //图片缓存
+    //图片内存缓存
     //LruCache<String, Bitmap> mImageCache;
-    ImageCache imageCache = new ImageCache();
-    //线程池线程数量为cpu数量
+    ImageCache imageCache = new MemoryCache();
+
+
     ExecutorService mExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public ImageLoader() {
         //initImageCache();
     }
 
+    //设置要使用的缓存
+    public void setImageCache(ImageCache cache) {
+        imageCache = cache;
+    }
    /* //缓存相关内容
     private void initImageCache() {
 
@@ -53,20 +60,24 @@ public class ImageLoader {
     public void displayImage(final String url, final ImageView imageView) {
         Log.i(TAG, "run0:");
         imageView.setTag(url);
-        mExecutorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                Bitmap bitmap = downLoadImage(url);
-                Log.i(TAG, "run1: "+bitmap.getRowBytes());
-                if (bitmap == null) {
-                    return;
+        Bitmap bitmap = imageCache.get(url);
+        if (bitmap == null) {
+            mExecutorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    Bitmap bitmap = downLoadImage(url);
+                    Log.i(TAG, "run1: " + bitmap.getRowBytes());
+                    if (bitmap == null) {
+                        return;
+                    }
+                    if (imageView.getTag().equals(url)) {
+                        imageView.setImageBitmap(bitmap);
+                    }
+                    imageCache.put(url, bitmap);
+                    
                 }
-                if (imageView.getTag().equals(url)) {
-                    imageView.setImageBitmap(bitmap);
-                }
-                imageCache.put(url, bitmap);
-            }
-        });
+            });
+        }
     }
 
     //下载图片
@@ -77,7 +88,7 @@ public class ImageLoader {
             URL mUrl = new URL(url);
             final HttpURLConnection conne = (HttpURLConnection) mUrl.openConnection();
             bitmap = BitmapFactory.decodeStream(conne.getInputStream());
-            if(bitmap==null){
+            if (bitmap == null) {
                 Log.i(TAG, "run3: ");
             }
             Log.i(TAG, "run4: ");
@@ -88,5 +99,9 @@ public class ImageLoader {
         }
         Log.i(TAG, "run4: ");
         return bitmap;
+    }
+
+    public void useDiskCache(boolean isCache) {
+        isSDCard = isCache;
     }
 }
